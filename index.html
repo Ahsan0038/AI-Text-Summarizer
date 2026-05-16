@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="AI-powered Text Summarizer using TextRank algorithm. Paste any article and get a concise, intelligent summary instantly." />
+  <title>AI Text Summarizer</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    /* =====================================================================
+       Design System Tokens
+    ===================================================================== */
+    :root {
+      --clr-bg:          #0d1117;
+      --clr-surface:     #161b22;
+      --clr-surface-2:   #1c2330;
+      --clr-border:      #30363d;
+      --clr-accent:      #58a6ff;
+      --clr-accent-2:    #79c0ff;
+      --clr-success:     #3fb950;
+      --clr-danger:      #f85149;
+      --clr-text:        #e6edf3;
+      --clr-text-muted:  #8b949e;
+      --clr-gradient-a:  #1f6feb;
+      --clr-gradient-b:  #388bfd;
+      --radius-lg:       16px;
+      --radius-md:       10px;
+      --radius-sm:       6px;
+      --shadow-glow:     0 0 30px rgba(88, 166, 255, 0.12);
+      --transition:      0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* =====================================================================
+       Reset & Base
+    ===================================================================== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--clr-bg);
+      color: var(--clr-text);
+      min-height: 100vh;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* =====================================================================
+       Animated Background Grid
+    ===================================================================== */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(88, 166, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(88, 166, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* =====================================================================
+       Navbar
+    ===================================================================== */
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      background: rgba(13, 17, 23, 0.85);
+      border-bottom: 1px solid var(--clr-border);
+      padding: 0 2rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .navbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-weight: 700;
+      font-size: 1.1rem;
+      letter-spacing: -0.02em;
+      text-decoration: none;
+      color: var(--clr-text);
+    }
+
+    .navbar-brand .brand-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--clr-gradient-a), var(--clr-gradient-b));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+    }
+
+    .navbar-badge {
+      background: linear-gradient(135deg, var(--clr-gradient-a), var(--clr-gradient-b));
+      color: #fff;
+      font-size: 0.65rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 20px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .api-link {
+      font-size: 0.8rem;
+      color: var(--clr-text-muted);
+      text-decoration: none;
+      border: 1px solid var(--clr-border);
+      padding: 5px 14px;
+      border-radius: 20px;
+      transition: var(--transition);
+    }
+    .api-link:hover {
+      color: var(--clr-accent);
+      border-color: var(--clr-accent);
+    }
+
+    /* =====================================================================
+       Hero Section
+    ===================================================================== */
+    .hero {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 4.5rem 1rem 2rem;
+    }
+
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(88, 166, 255, 0.1);
+      border: 1px solid rgba(88, 166, 255, 0.25);
+      color: var(--clr-accent-2);
+      font-size: 0.78rem;
+      font-weight: 500;
+      padding: 5px 14px;
+      border-radius: 20px;
+      margin-bottom: 1.4rem;
+      letter-spacing: 0.04em;
+    }
+
+    .hero-tag .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--clr-success);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1.15;
+      background: linear-gradient(135deg, #e6edf3 0%, var(--clr-accent-2) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1rem;
+    }
+
+    .hero p {
+      font-size: 1.05rem;
+      color: var(--clr-text-muted);
+      max-width: 520px;
+      margin: 0 auto 0.5rem;
+    }
+
+    /* =====================================================================
+       Main Container
+    ===================================================================== */
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 1.25rem 5rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* =====================================================================
+       Cards
+    ===================================================================== */
+    .card {
+      background: var(--clr-surface);
+      border: 1px solid var(--clr-border);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+      transition: var(--transition);
+    }
+
+    .card:hover {
+      border-color: rgba(88, 166, 255, 0.3);
+      box-shadow: var(--shadow-glow);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .card-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-sm);
+      background: rgba(88, 166, 255, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+    }
+
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--clr-text);
+    }
+
+    .card-subtitle {
+      font-size: 0.75rem;
+      color: var(--clr-text-muted);
+    }
+
+    /* =====================================================================
+       Form Elements
+    ===================================================================== */
+    label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--clr-text-muted);
+      margin-bottom: 0.45rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    textarea, input[type="number"] {
+      width: 100%;
+      background: var(--clr-surface-2);
+      border: 1px solid var(--clr-border);
+      border-radius: var(--radius-md);
+      color: var(--clr-text);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.92rem;
+      line-height: 1.6;
+      padding: 0.85rem 1rem;
+      outline: none;
+      transition: var(--transition);
+      resize: vertical;
+    }
+
+    textarea:focus, input[type="number"]:focus {
+      border-color: var(--clr-accent);
+      box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+    }
+
+    textarea::placeholder { color: var(--clr-text-muted); opacity: 0.6; }
+
+    textarea#input_text { min-height: 200px; }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 1rem;
+      align-items: end;
+      margin-top: 1rem;
+    }
+
+    .num-field { max-width: 160px; }
+
+    /* =====================================================================
+       Submit Button
+    ===================================================================== */
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, var(--clr-gradient-a), var(--clr-gradient-b));
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-md);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.92rem;
+      font-weight: 600;
+      padding: 0.78rem 1.6rem;
+      cursor: pointer;
+      transition: var(--transition);
+      white-space: nowrap;
+      box-shadow: 0 4px 15px rgba(31, 111, 235, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(31, 111, 235, 0.45);
+    }
+
+    .btn-primary:active { transform: translateY(0); }
+
+    .btn-primary .spinner {
+      display: none;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* =====================================================================
+       Error / Alert
+    ===================================================================== */
+    .alert {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.7rem;
+      border-radius: var(--radius-md);
+      padding: 0.85rem 1.1rem;
+      font-size: 0.88rem;
+      margin-bottom: 1.5rem;
+      animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .alert-error {
+      background: rgba(248, 81, 73, 0.1);
+      border: 1px solid rgba(248, 81, 73, 0.3);
+      color: #ffa198;
+    }
+
+    /* =====================================================================
+       Summary Output Card
+    ===================================================================== */
+    .output-card {
+      background: var(--clr-surface);
+      border: 1px solid rgba(63, 185, 80, 0.25);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+      animation: fadeIn 0.5s ease;
+      box-shadow: 0 0 25px rgba(63, 185, 80, 0.07);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .output-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .output-label {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--clr-success);
+    }
+
+    .copy-btn {
+      background: transparent;
+      border: 1px solid var(--clr-border);
+      border-radius: var(--radius-sm);
+      color: var(--clr-text-muted);
+      font-size: 0.75rem;
+      font-family: 'Inter', sans-serif;
+      padding: 4px 12px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .copy-btn:hover {
+      border-color: var(--clr-accent);
+      color: var(--clr-accent);
+    }
+
+    .summary-text {
+      font-size: 0.97rem;
+      line-height: 1.8;
+      color: var(--clr-text);
+      white-space: pre-wrap;
+    }
+
+    /* Original text collapsible */
+    .original-toggle {
+      background: transparent;
+      border: none;
+      color: var(--clr-text-muted);
+      font-size: 0.8rem;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 0.5rem 0 0;
+      transition: color var(--transition);
+    }
+    .original-toggle:hover { color: var(--clr-text); }
+
+    .original-text-block {
+      display: none;
+      background: var(--clr-surface-2);
+      border: 1px solid var(--clr-border);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      margin-top: 0.6rem;
+      font-size: 0.85rem;
+      color: var(--clr-text-muted);
+      line-height: 1.7;
+    }
+
+    /* Stats chips */
+    .stats-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1.2rem;
+    }
+
+    .stat-chip {
+      background: rgba(88, 166, 255, 0.08);
+      border: 1px solid rgba(88, 166, 255, 0.2);
+      border-radius: 20px;
+      padding: 3px 12px;
+      font-size: 0.75rem;
+      color: var(--clr-accent-2);
+    }
+
+    /* =====================================================================
+       API Docs Info Box
+    ===================================================================== */
+    .api-box {
+      background: var(--clr-surface);
+      border: 1px solid var(--clr-border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem 2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .api-box summary {
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--clr-text-muted);
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: color var(--transition);
+    }
+    .api-box summary:hover { color: var(--clr-text); }
+
+    .api-box[open] summary { color: var(--clr-accent); }
+
+    .api-content { margin-top: 1.2rem; }
+
+    .endpoint-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(88, 166, 255, 0.1);
+      border: 1px solid rgba(88, 166, 255, 0.25);
+      border-radius: var(--radius-sm);
+      padding: 6px 14px;
+      font-size: 0.82rem;
+      color: var(--clr-accent-2);
+      margin-bottom: 0.8rem;
+    }
+
+    .method-badge {
+      background: rgba(63, 185, 80, 0.15);
+      color: var(--clr-success);
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+
+    pre.code-block {
+      background: var(--clr-bg);
+      border: 1px solid var(--clr-border);
+      border-radius: var(--radius-md);
+      padding: 1rem 1.2rem;
+      font-size: 0.8rem;
+      color: #a5d6ff;
+      overflow-x: auto;
+      white-space: pre;
+      line-height: 1.6;
+      tab-size: 2;
+    }
+
+    /* =====================================================================
+       Footer
+    ===================================================================== */
+    footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--clr-border);
+      text-align: center;
+      padding: 1.5rem 1rem;
+      font-size: 0.78rem;
+      color: var(--clr-text-muted);
+    }
+
+    footer a { color: var(--clr-accent); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    /* =====================================================================
+       Responsive
+    ===================================================================== */
+    @media (max-width: 600px) {
+      .form-row { grid-template-columns: 1fr; }
+      .num-field { max-width: 100%; }
+      .navbar { padding: 0 1rem; }
+      .hero { padding-top: 3rem; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ===== Navbar ===== -->
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <a class="navbar-brand" href="/" id="nav-home">
+      <div class="brand-icon" aria-hidden="true">✦</div>
+      AI Text Summarizer
+      <span class="navbar-badge">TextRank</span>
+    </a>
+    <a class="api-link" href="#api-docs" id="nav-api">API Docs ↓</a>
+  </nav>
+
+  <!-- ===== Hero ===== -->
+  <header class="hero">
+    <div class="hero-tag">
+      <span class="dot" aria-hidden="true"></span>
+      Powered by NLTK &amp; NetworkX
+    </div>
+    <h1>Intelligent Text<br>Summarization</h1>
+    <p>Paste any article or paragraph and get a concise, extractive summary in seconds using the TextRank algorithm.</p>
+  </header>
+
+  <!-- ===== Main Content ===== -->
+  <main class="container" id="main-content">
+
+    <!-- Error alert (only shown when Flask passes an error) -->
+    {% if error %}
+    <div class="alert alert-error" role="alert" id="error-alert">
+      <span aria-hidden="true">⚠</span>
+      <span>{{ error }}</span>
+    </div>
+    {% endif %}
+
+    <!-- ===== Input Form Card ===== -->
+    <section class="card" aria-labelledby="form-heading">
+      <div class="card-header">
+        <div class="card-icon" aria-hidden="true">📝</div>
+        <div>
+          <div class="card-title" id="form-heading">Input Text</div>
+          <div class="card-subtitle">Paste the text you want to summarize</div>
+        </div>
+      </div>
+
+      <form action="/summarize" method="POST" id="summarizer-form" novalidate>
+
+        <label for="input_text">Text to Summarize</label>
+        <textarea
+          id="input_text"
+          name="input_text"
+          placeholder="Paste your article, blog post, or any text here…"
+          required
+          aria-required="true"
+          minlength="50"
+        >{{ original_text or '' }}</textarea>
+
+        <div class="form-row">
+          <div class="num-field">
+            <label for="num_sentences">Summary Sentences</label>
+            <input
+              type="number"
+              id="num_sentences"
+              name="num_sentences"
+              value="{{ num_sentences or 3 }}"
+              min="1"
+              max="50"
+              required
+              aria-required="true"
+            />
+          </div>
+          <button type="submit" class="btn-primary" id="summarize-btn">
+            <span class="spinner" id="btn-spinner" aria-hidden="true"></span>
+            <span id="btn-text">✦ Summarize</span>
+          </button>
+        </div>
+
+      </form>
+    </section>
+
+    <!-- ===== Summary Output (only shown after submission) ===== -->
+    {% if output_summary %}
+    <section class="output-card" aria-labelledby="summary-heading">
+
+      <div class="output-header">
+        <div class="output-label">
+          <span aria-hidden="true">✅</span>
+          <span id="summary-heading">Summary</span>
+        </div>
+        <button class="copy-btn" id="copy-btn" onclick="copyToClipboard()" type="button">Copy</button>
+      </div>
+
+      <div class="summary-text" id="summary-output">{{ output_summary }}</div>
+
+      <div class="stats-row">
+        <span class="stat-chip">📊 {{ num_sentences }} sentence{{ 's' if num_sentences != 1 else '' }} requested</span>
+        <span class="stat-chip">📄 {{ original_text | length }} characters input</span>
+        <span class="stat-chip">✂ {{ output_summary | length }} characters output</span>
+      </div>
+
+      <!-- Collapsible original text -->
+      <button class="original-toggle" id="orig-toggle"
+              onclick="toggleOriginal()" type="button"
+              aria-expanded="false" aria-controls="original-block">
+        <span id="orig-arrow">▶</span> View original text
+      </button>
+      <div class="original-text-block" id="original-block" role="region" aria-label="Original text">
+        {{ original_text }}
+      </div>
+    </section>
+    {% endif %}
+
+    <!-- ===== API Docs ===== -->
+    <details class="api-box" id="api-docs">
+      <summary>🔌 JSON API — Test with Postman</summary>
+
+      <div class="api-content">
+        <div class="endpoint-pill">
+          <span class="method-badge">POST</span>
+          /api/summarize
+        </div>
+
+        <p style="font-size:0.82rem; color:var(--clr-text-muted); margin-bottom:0.8rem;">
+          Send a JSON body and receive a structured summary response. Ideal for
+          integration or testing with Postman.
+        </p>
+
+        <strong style="font-size:0.8rem; color:var(--clr-text-muted); text-transform:uppercase; letter-spacing:0.06em;">
+          Request Body
+        </strong>
+        <pre class="code-block" id="api-request-sample">{
+  "text": "Your long article text goes here...",
+  "num_sentences": 3
+}</pre>
+
+        <strong style="font-size:0.8rem; color:var(--clr-text-muted); text-transform:uppercase; letter-spacing:0.06em; display:block; margin-top:0.9rem;">
+          Success Response
+        </strong>
+        <pre class="code-block" id="api-response-sample">{
+  "success": true,
+  "summary": "Key extracted sentence one. Key extracted sentence two.",
+  "num_sentences": 3,
+  "original_length": 120,
+  "summary_length": 18
+}</pre>
+      </div>
+    </details>
+
+  </main>
+
+  <!-- ===== Footer ===== -->
+  <footer>
+    <p>Built with Python · Flask · NLTK · NetworkX &nbsp;|&nbsp;
+      TextRank extractive summarization &nbsp;|&nbsp;
+      <a href="https://github.com/DheerajKumar97/Text-Summarizer-Flask-Deployment" target="_blank" rel="noopener">
+        View on GitHub
+      </a>
+    </p>
+  </footer>
+
+  <!-- ===== JavaScript ===== -->
+  <script>
+    /* Show loading spinner on form submit */
+    document.getElementById('summarizer-form').addEventListener('submit', function (e) {
+      const text = document.getElementById('input_text').value.trim();
+      const num  = parseInt(document.getElementById('num_sentences').value, 10);
+
+      /* Client-side validation */
+      if (!text) {
+        e.preventDefault();
+        alert('Please enter some text to summarize.');
+        return;
+      }
+      if (!num || num < 1) {
+        e.preventDefault();
+        alert('Please enter a valid number of sentences (minimum 1).');
+        return;
+      }
+
+      /* Show spinner */
+      document.getElementById('btn-spinner').style.display = 'block';
+      document.getElementById('btn-text').textContent = 'Processing…';
+      document.getElementById('summarize-btn').disabled = true;
+    });
+
+    /* Toggle original text visibility */
+    function toggleOriginal() {
+      const block  = document.getElementById('original-block');
+      const arrow  = document.getElementById('orig-arrow');
+      const toggle = document.getElementById('orig-toggle');
+      const isOpen = block.style.display === 'block';
+
+      block.style.display  = isOpen ? 'none' : 'block';
+      arrow.textContent    = isOpen ? '▶' : '▼';
+      toggle.setAttribute('aria-expanded', String(!isOpen));
+    }
+
+    /* Copy summary to clipboard */
+    function copyToClipboard() {
+      const text = document.getElementById('summary-output')?.innerText || '';
+      if (!text) return;
+
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById('copy-btn');
+        btn.textContent = 'Copied ✓';
+        btn.style.color = 'var(--clr-success)';
+        setTimeout(() => {
+          btn.textContent = 'Copy';
+          btn.style.color = '';
+        }, 2000);
+      }).catch(() => {
+        /* Fallback for older browsers */
+        const el = document.createElement('textarea');
+        el.value = text;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+      });
+    }
+  </script>
+
+</body>
+</html>

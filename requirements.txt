@@ -1,0 +1,19 @@
+# Core web framework
+Flask==2.3.3
+Werkzeug==2.3.7
+
+# WSGI server for production (Hugging Face Spaces / Heroku)
+gunicorn==21.2.0
+
+# NLP
+nltk==3.8.1
+regex==2023.10.3
+
+# Graph-based ranking
+networkx==3.2.1
+
+# Numerical computing
+numpy==1.26.4
+
+# (Optional) additional NLTK utilities – keeping it lightweight
+scipy==1.11.4
